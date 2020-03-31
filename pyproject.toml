@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "tagup"
+version = "0.1.0"
+description = "Reference implementation of the Tagup Language"
+license = "MIT"
+authors = ["Garrett Fairburn <garrett@fairburn.dev>"]
+readme = "README.md"
+homepage = "https://fairburn.dev/tagup/"
+keywords = ["markup", "language", "templating"]
+
+[tool.poetry.dependencies]
+python = "^3"
+lark-parser = "^0.8.5"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
