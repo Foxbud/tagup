@@ -6,6 +6,10 @@ This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.
 
 ## Changelog
 
+**v0.1.2**
+
+- Fixed bug where code called "trim()" rather than "strip()."
+
 **v0.1.1**
 
 - Added non-standard option to trim whitespace from arguments before tag evaluation.

@@ -42,11 +42,11 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 	def named_substitution(self, node):
 		name = node.children[0]
 
-		return self.named_args[name.trim()]
+		return self.named_args[name.strip()]
 
 	def positional_substitution(self, node):
 		position = node.children[0]
-		arg_num = int(position.trim()) - 1
+		arg_num = int(position.strip()) - 1
 
 		return self.pos_args[arg_num]
 
@@ -59,14 +59,14 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 		name = node.children[0]
 		value = node.children[1]
 		if self.trim_args:
-			value = value.trim()
+			value = value.strip()
 
 		return (name, value)
 
 	def positional_argument(self, node):
 		value = node.children[0]
 		if self.trim_args:
-			value = value.trim()
+			value = value.strip()
 
 		return (value,)
 
