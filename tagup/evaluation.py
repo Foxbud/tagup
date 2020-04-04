@@ -29,9 +29,10 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 		's': '\\',
 	}
 
-	def __init__(self, renderer, *args, **kwargs):
+	def __init__(self, renderer, trim_args, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.renderer = renderer
+		self.trim_args = trim_args
 
 	def escape_sequence(self, node):
 		sequence = node.children[0]
@@ -41,11 +42,11 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 	def named_substitution(self, node):
 		name = node.children[0]
 
-		return self.named_args[name]
+		return self.named_args[name.trim()]
 
 	def positional_substitution(self, node):
 		position = node.children[0]
-		arg_num = int(position) - 1
+		arg_num = int(position.trim()) - 1
 
 		return self.pos_args[arg_num]
 
@@ -57,11 +58,15 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 	def named_argument(self, node):
 		name = node.children[0]
 		value = node.children[1]
+		if self.trim_args:
+			value = value.trim()
 
 		return (name, value)
 
 	def positional_argument(self, node):
 		value = node.children[0]
+		if self.trim_args:
+			value = value.trim()
 
 		return (value,)
 

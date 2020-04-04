@@ -11,11 +11,17 @@ from .evaluation import CommonEvaluator, ControlFlowEvaluator
 
 
 class Renderer:
-	def __init__(self, get_tag_callback, cache_tag_ast_callback=None):
+	def __init__(
+		self,
+		get_tag_callback,
+		cache_tag_ast_callback=None,
+		trim_args=False
+	):
 		grammar = self._get_grammar()
 		self._parser = Lark(grammar, parser='lalr')
 		self._get_tag = get_tag_callback
 		self._cache_tag_ast = cache_tag_ast_callback
+		self._trim_args = trim_args
 
 	def render_markup(self, markup, named_args=dict(), pos_args=list()):
 		ast = self._parse_markup(markup)
@@ -45,7 +51,8 @@ class Renderer:
 		result = CommonEvaluator(
 			named_args=named_args,
 			pos_args=pos_args,
-			renderer=self
+			renderer=self,
+			trim_args=self._trim_args
 		).traverse(intermediate)
 
 		return result
