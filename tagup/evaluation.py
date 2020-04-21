@@ -40,15 +40,17 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 		return self.escape_sequences[sequence]
 
 	def named_substitution(self, node):
-		name = node.children[0]
+		name = node.children[0].strip()
+		value = self.named_args[name]
 
-		return self.named_args[name.strip()]
+		return value
 
 	def positional_substitution(self, node):
-		position = node.children[0]
-		arg_num = int(position.strip()) - 1
+		position = node.children[0].strip()
+		arg_num = int(position) - 1
+		value = self.pos_args[arg_num]
 
-		return self.pos_args[arg_num]
+		return value
 
 	def block(self, node):
 		children = node.children
@@ -56,7 +58,7 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 		return ''.join(children)
 
 	def named_argument(self, node):
-		name = node.children[0]
+		name = node.children[0].strip()
 		value = node.children[1]
 		if self.trim_args:
 			value = value.strip()
@@ -80,12 +82,15 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 				named_args[arg[0]] = arg[1]
 			else:
 				pos_args.append(arg[0])
-
-		return self.renderer._render_tag(
+		result = self.renderer._render_tag(
 			name=name,
 			named_args=named_args,
 			pos_args=pos_args
 		)
+		if self.trim_args:
+			result = result.strip()
+
+		return result
 
 
 class ControlFlowEvaluator(ContextMixin, PreOrderTraverser):

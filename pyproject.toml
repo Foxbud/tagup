@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tagup"
-version = "0.1.2"
+version = "0.1.3"
 description = "Reference implementation of the Tagup Language"
 license = "MIT"
 authors = ["Garrett Fairburn <garrett@fairburn.dev>"]
