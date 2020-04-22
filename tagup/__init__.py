@@ -6,7 +6,7 @@ See file LICENSE for full license details.
 
 from pkg_resources import get_distribution, DistributionNotFound
 
-from .language import Renderer
+from .language import BaseRenderer
 
 
 # Set version number.

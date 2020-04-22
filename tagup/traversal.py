@@ -11,38 +11,76 @@ class DiscardNode(Exception):
 	pass
 
 
-class PostOrderTraverser:
+class BaseTraverser:
+	preprocess_hook_template = 'preprocess_{name}_node'
+	postprocess_hook_template = 'postprocess_{name}_node'
+
+	def __init__(self, hook_manager):
+		self.hook_manager = hook_manager
+
 	def traverse(self, node):
-		f = getattr(self, node.data)
-		node.children = self._traverse_children(node)
-		new_node = f(node)
+		raise NotImplementedError
 
-		return new_node
-
-	def _traverse_children(self, node):
+	def traverse_children(self, node):
 		new_children = []
 		for child in node.children:
 			if isinstance(child, Tree):
 				try:
 					new_children.append(self.traverse(child))
-				except DiscardNode as e:
+				except DiscardNode:
 					pass
 			else:
 				new_children.append(child)
 
 		return new_children
 
-	def __getattr__(self, name):
-		return self.__default__
+	def process(self, node):
+		node_name = node.data
+		try:
+			processor = getattr(self, node_name)
+		except AttributeError:
+			pass
+		else:
+			node = self.preprocess_hook(node, node_name)
+			node = processor(node)
+			node = self.postprocess_hook(node, node_name)
 
-	def __default__(self, node):
+		return node
+
+	def preprocess_hook(self, node, node_name):
+		hook_name = self.preprocess_hook_template.format(name=node_name)
+		try:
+			hook = getattr(self.hook_manager, hook_name)
+		except AttributeError:
+			pass
+		else:
+			node = hook(node)
+
+		return node
+
+	def postprocess_hook(self, node, node_name):
+		hook_name = self.postprocess_hook_template.format(name=node_name)
+		try:
+			hook = getattr(self.hook_manager, hook_name)
+		except AttributeError:
+			pass
+		else:
+			node = hook(node)
+
 		return node
 
 
-class PreOrderTraverser(PostOrderTraverser):
+class PostOrderTraverser(BaseTraverser):
 	def traverse(self, node):
-		f = getattr(self, node.data)
-		new_node = f(node)
-		new_node.children = self._traverse_children(new_node)
+		node.children = self.traverse_children(node)
+		node = self.process(node)
 
-		return new_node
+		return node
+
+
+class PreOrderTraverser(BaseTraverser):
+	def traverse(self, node):
+		node = self.process(node)
+		node.children = self.traverse_children(node)
+
+		return node

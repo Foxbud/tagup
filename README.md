@@ -6,6 +6,16 @@ This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.
 
 ## Changelog
 
+**v0.2.0**
+
+- Renamed "Renderer" to "BaseRenderer."
+- Refactored "BaseRenderer" to use method overriding for "get_tag" instead of providing "get_tag_callback" to constructor.
+- Removed "cache_tag_ast_callback" from "BaseRenderer" constructor.
+- Removed "trim_args" from "BaseRenderer" constructor.
+- Added a node pre and post processing hook system.
+- Added test cases.
+- Various internal optimizations.
+
 **v0.1.3**
 
 - Fixed bug where the "trim_args" option didn't properly remove leading and trailing whitespace in some situations.

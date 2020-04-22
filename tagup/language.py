@@ -10,55 +10,56 @@ from lark import Lark, Tree
 from .evaluation import CommonEvaluator, ControlFlowEvaluator
 
 
-class Renderer:
-	def __init__(
-		self,
-		get_tag_callback,
-		cache_tag_ast_callback=None,
-		trim_args=False
-	):
-		grammar = self._get_grammar()
-		self._parser = Lark(grammar, parser='lalr')
-		self._get_tag = get_tag_callback
-		self._cache_tag_ast = cache_tag_ast_callback
-		self._trim_args = trim_args
-
+class BaseRenderer:
 	def render_markup(self, markup, named_args=dict(), pos_args=list()):
-		ast = self._parse_markup(markup)
-		result = self._evaluate_ast(ast, named_args, pos_args)
+		ast = self.parse_markup(markup)
+		result = self.evaluate_ast(ast, named_args, pos_args)
 
 		return result
 
-	def _render_tag(self, name, named_args, pos_args):
-		tag = self._get_tag(name)
-		if isinstance(tag, Tree):
-			ast = tag
-		else:
-			ast = self._parse_markup(tag)
-			if self._cache_tag_ast is not None:
-				self._cache_tag_ast(name, ast)
+	def get_tag(self, name):
+		raise NotImplementedError
 
-		return self._evaluate_ast(ast, named_args, pos_args)
+	def render_tag(self, name, named_args, pos_args):
+		tag_markup = self.get_tag(name)
 
-	def _parse_markup(self, markup):
-		return self._parser.parse(markup)
+		return self.render_markup(tag_markup, named_args, pos_args)
 
-	def _evaluate_ast(self, ast, named_args, pos_args):
+	def parse_markup(self, markup):
+		return self.get_parser().parse(markup)
+
+	def evaluate_ast(self, ast, named_args, pos_args):
 		intermediate = ControlFlowEvaluator(
 			named_args=named_args,
 			pos_args=pos_args,
+			hook_manager=self,
 		).traverse(ast)
 		result = CommonEvaluator(
 			named_args=named_args,
 			pos_args=pos_args,
+			hook_manager=self,
 			renderer=self,
-			trim_args=self._trim_args
 		).traverse(intermediate)
 
 		return result
 
-	def _get_grammar(self):
-		root_dir = path.dirname(path.abspath(__file__))
-		grammar_file = path.join(root_dir, 'grammar.lark')
-		with open(grammar_file) as f_in:
-			return f_in.read()
+	def get_grammar(self):
+		try:
+			grammar = self.grammar
+		except AttributeError:
+			grammar_filepath = path.join(
+				path.dirname(path.abspath(__file__)),
+				'grammar.lark'
+			)
+			with open(grammar_filepath) as f_in:
+				grammar = self.grammar = f_in.read()
+
+		return grammar
+
+	def get_parser(self):
+		try:
+			parser = self.parser
+		except AttributeError:
+			parser = self.parser = Lark(self.get_grammar(), parser='lalr')
+
+		return parser

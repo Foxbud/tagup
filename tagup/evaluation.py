@@ -29,10 +29,9 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 		's': '\\',
 	}
 
-	def __init__(self, renderer, trim_args, *args, **kwargs):
+	def __init__(self, renderer, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.renderer = renderer
-		self.trim_args = trim_args
 
 	def escape_sequence(self, node):
 		sequence = node.children[0]
@@ -60,15 +59,11 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 	def named_argument(self, node):
 		name = node.children[0].strip()
 		value = node.children[1]
-		if self.trim_args:
-			value = value.strip()
 
 		return (name, value)
 
 	def positional_argument(self, node):
 		value = node.children[0]
-		if self.trim_args:
-			value = value.strip()
 
 		return (value,)
 
@@ -82,13 +77,11 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 				named_args[arg[0]] = arg[1]
 			else:
 				pos_args.append(arg[0])
-		result = self.renderer._render_tag(
+		result = self.renderer.render_tag(
 			name=name,
 			named_args=named_args,
 			pos_args=pos_args
 		)
-		if self.trim_args:
-			result = result.strip()
 
 		return result
 
