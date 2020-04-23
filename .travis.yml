@@ -7,3 +7,5 @@ install:
   - pip install -r requirements.txt
 script:
   - coverage run --branch --include "tagup/*.py" -m unittest
+after_success:
+  - codecov
