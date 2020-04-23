@@ -10,6 +10,10 @@ This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.
 
 ## Changelog
 
+**v0.2.1**
+
+- Added tag prefetching.
+
 **v0.2.0**
 
 - Renamed "Renderer" to "BaseRenderer."
