@@ -1,9 +1,16 @@
-import unittest
+"""
+This file is part of the tagup Python module which is released under MIT.
+See file LICENSE for full license details.
+"""
+
+
+from unittest import TestCase
+from unittest.mock import MagicMock
 
 from tagup import BaseRenderer
 
 
-class RenderingTestCase(unittest.TestCase):
+class RenderingTestCase(TestCase):
 	class TestRenderer(BaseRenderer):
 		tags = {
 			'const': 'constant value',
@@ -133,7 +140,7 @@ class RenderingTestCase(unittest.TestCase):
 			)
 
 
-class TagFetchTestCase(unittest.TestCase):
+class TagFetchTestCase(TestCase):
 	class UnimplementedFetchTestRenderer(BaseRenderer):
 		pass
 
@@ -145,7 +152,7 @@ class TagFetchTestCase(unittest.TestCase):
 			self.renderer.render_markup('[const]')
 
 
-class TagPrefetchTestCase(unittest.TestCase):
+class TagPrefetchTestCase(TestCase):
 	class PrefetchTestRenderer(BaseRenderer):
 		tags = {
 			'a': 'constant value',
@@ -156,21 +163,18 @@ class TagPrefetchTestCase(unittest.TestCase):
 		def get_tag(self, name):
 			return self.tags[name]
 
-		def prefetch_tags(self, names):
-			self.prefetched_tags = names
-
 	def test_tag_prefetching(self):
 		renderer = self.PrefetchTestRenderer()
+		renderer.prefetch_tags = MagicMock()
 		renderer.render_markup(
 			'[a] [b] [b] [a] [c] [a] [c] [a]'
 		)
-		self.assertEqual(
-			renderer.prefetched_tags,
+		renderer.prefetch_tags.assert_called_with(
 			{'a', 'b', 'c',}
 		)
 
 
-class HookTestCase(unittest.TestCase):
+class HookTestCase(TestCase):
 	class PreprocessTestRenderer(BaseRenderer):
 		def preprocess_block_node(self, node):
 			node.children = ['pre',]

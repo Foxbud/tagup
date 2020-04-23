@@ -1,0 +1,9 @@
+language: python
+python:
+  - "3.8"
+install:
+  - pip install poetry
+  - poetry export --dev -f requirements.txt
+  - pip install -r requirements.txt
+script:
+  - coverage run --branch --include "tagup/*.py" -m unittest
