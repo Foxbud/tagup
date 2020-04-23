@@ -8,6 +8,7 @@ class RenderingTestCase(unittest.TestCase):
 		tags = {
 			'const': 'constant value',
 			'positional-sub': '<sub>[\\\\1]</sub>',
+			'named-sub': '<sub>[\\\\arg]</sub>',
 		}
 
 		def get_tag(self, name):
@@ -101,6 +102,73 @@ class RenderingTestCase(unittest.TestCase):
 				'<sub>argument value\n</sub>'
 			)
 
+	def test_named_substitution(self):
+		with self.subTest('separator'):
+			self.assertEqual(
+				self.renderer.render_markup(
+					'[named-sub\\arg\\\\argument value]'
+				),
+				'<sub>argument value</sub>'
+			)
+		with self.subTest('no separator'):
+			self.assertEqual(
+				self.renderer.render_markup(
+					'[named-sub arg\\\\argument value]'
+				),
+				'<sub>argument value</sub>'
+			)
+		with self.subTest('multiline separator'):
+			self.assertEqual(
+				self.renderer.render_markup(
+					'[named-sub\n\\\narg\n\\\\\nargument value\n]'
+				),
+				'<sub>\nargument value\n</sub>'
+			)
+		with self.subTest('multiline no separator'):
+			self.assertEqual(
+				self.renderer.render_markup(
+					'[named-sub\narg\n\\\\\nargument value\n]'
+				),
+				'<sub>\nargument value\n</sub>'
+			)
+
+
+class TagFetchTestCase(unittest.TestCase):
+	class UnimplementedFetchTestRenderer(BaseRenderer):
+		pass
+
+	def setUp(self):
+		self.renderer = self.UnimplementedFetchTestRenderer()
+
+	def test_unimplemented_error(self):
+		with self.assertRaises(NotImplementedError):
+			self.renderer.render_markup('[const]')
+
+
+class TagPrefetchTestCase(unittest.TestCase):
+	class PrefetchTestRenderer(BaseRenderer):
+		tags = {
+			'a': 'constant value',
+			'b': 'constant value',
+			'c': 'constant value',
+		}
+
+		def get_tag(self, name):
+			return self.tags[name]
+
+		def prefetch_tags(self, names):
+			self.prefetched_tags = names
+
+	def test_tag_prefetching(self):
+		renderer = self.PrefetchTestRenderer()
+		renderer.render_markup(
+			'[a] [b] [b] [a] [c] [a] [c] [a]'
+		)
+		self.assertEqual(
+			renderer.prefetched_tags,
+			{'a', 'b', 'c',}
+		)
+
 
 class HookTestCase(unittest.TestCase):
 	class PreprocessTestRenderer(BaseRenderer):
@@ -120,27 +188,27 @@ class HookTestCase(unittest.TestCase):
 		pass
 
 	def test_preprocess(self):
-		self.renderer = self.PreprocessTestRenderer()
+		renderer = self.PreprocessTestRenderer()
 		self.assertEqual(
-			self.renderer.render_markup(
+			renderer.render_markup(
 				'value'
 			),
 			'pre'
 		)
 
 	def test_postprocess(self):
-		self.renderer = self.PostprocessTestRenderer()
+		renderer = self.PostprocessTestRenderer()
 		self.assertEqual(
-			self.renderer.render_markup(
+			renderer.render_markup(
 				'value'
 			),
 			'<post>value</post>'
 		)
 
 	def test_pre_and_postprocess(self):
-		self.renderer = self.ProcessTestRenderer()
+		renderer = self.ProcessTestRenderer()
 		self.assertEqual(
-			self.renderer.render_markup(
+			renderer.render_markup(
 				'value'
 			),
 			'<post>pre</post>'

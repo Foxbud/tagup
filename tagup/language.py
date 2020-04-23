@@ -34,6 +34,11 @@ class BaseRenderer:
 			pos_args=pos_args,
 			hook_manager=self,
 		).traverse(ast)
+
+		if hasattr(self, 'prefetch_tags'):
+			if tag_names := self.discover_tags(intermediate):
+				self.prefetch_tags(tag_names)
+
 		result = CommonEvaluator(
 			named_args=named_args,
 			pos_args=pos_args,
@@ -42,6 +47,15 @@ class BaseRenderer:
 		).traverse(intermediate)
 
 		return result
+
+	def discover_tags(self, ast):
+		tag_nodes = ast.find_data('tag')
+
+		return {
+			node.children[0]
+			for node
+			in tag_nodes
+		}
 
 	def get_grammar(self):
 		try:
