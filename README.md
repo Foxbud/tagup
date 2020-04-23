@@ -1,3 +1,7 @@
+![Travis (.org) branch](https://img.shields.io/travis/Foxbud/tagup/master?label=master&style=flat-square)
+&nbsp;
+![Codecov branch](https://img.shields.io/codecov/c/github/Foxbud/tagup/master?style=flat-square)
+
 # tagup
 
 **tagup** is a Python module which provides a reference implementation of the [Tagup Language](https://fairburn.dev/tagup/).
