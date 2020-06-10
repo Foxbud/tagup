@@ -13,6 +13,7 @@ This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.
 **v0.3.0.dev**
 
 - Added "max_depth" option to "BaseRenderer."
+- Fixed bug that prevented the positional loop from function when not provided an optional default value.
 
 **v0.2.1**
 

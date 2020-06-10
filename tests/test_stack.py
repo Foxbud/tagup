@@ -27,16 +27,17 @@ class TagStackTestCase(TestCase):
                 )
             )
         with self.subTest('overflow'):
-            with self.assertRaises(
-                TagStackOverflow,
-                msg=(
+            with self.assertRaises(TagStackOverflow) as cm:
+                self.stack.push('c', 3, 18)
+            self.assertEqual(
+                str(cm.exception),
+                (
                     'ROOT:1,2 -> '
                     'a:2,5 -> '
-                    'b:4,18 -> '
+                    'b:3,18 -> '
                     'c'
                 )
-            ):
-                self.stack.push('c', 3, 18)
+            )
 
     def test_pop(self):
         with self.subTest('valid'):

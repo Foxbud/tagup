@@ -8,6 +8,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from tagup import BaseRenderer
+from tagup.exceptions import TagStackOverflow
 
 
 class RenderingTestCase(TestCase):
@@ -16,6 +17,28 @@ class RenderingTestCase(TestCase):
             'const': 'constant value',
             'positional-sub': '<sub>[\\\\1]</sub>',
             'named-sub': '<sub>[\\\\arg]</sub>',
+            'positional-test': (
+                '[\\if 1\\argument was passed]'
+            ),
+            'positional-test-default': (
+                'argument [\\if 1\\was\\wasn\'t] passed'
+            ),
+            'named-test': (
+                '[\\if arg\\argument was passed]'
+            ),
+            'named-test-default': (
+                'argument [\\if arg\\was\\wasn\'t] passed'
+            ),
+            'positional-loop': (
+                '<outer>'
+                '[\\loop <inner>[\\item]</inner>]'
+                '</outer>'
+            ),
+            'positional-loop-default': (
+                '<outer>'
+                '[\\loop <inner>[\\item]</inner>\\no arguments]'
+                '</outer>'
+            ),
         }
 
         def get_tag(self, name):
@@ -139,6 +162,106 @@ class RenderingTestCase(TestCase):
                 '<sub>\nargument value\n</sub>'
             )
 
+    def test_positional_test(self):
+        with self.subTest('false w/o default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-test arg\\\\named arg value]'
+                ),
+                ''
+            )
+        with self.subTest('true w/o default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-test argument value\\arg\\\\named arg value]'
+                ),
+                'argument was passed'
+            )
+        with self.subTest('false w/ default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-test-default arg\\\\named arg value]'
+                ),
+                'argument wasn\'t passed'
+            )
+        with self.subTest('true w/ default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-test-default'
+                    '\\argument value\\arg\\\\named arg value]'
+                ),
+                'argument was passed'
+            )
+
+    def test_named_test(self):
+        with self.subTest('false w/o default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[named-test argument value]'
+                ),
+                ''
+            )
+        with self.subTest('true w/o default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-test arg\\\\named arg value\\argument value]'
+                ),
+                'argument was passed'
+            )
+        with self.subTest('false w/ default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[named-test-default argument value]'
+                ),
+                'argument wasn\'t passed'
+            )
+        with self.subTest('true w/ default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[named-test-default'
+                    '\\arg\\\\named arg value\\argument value]'
+                ),
+                'argument was passed'
+            )
+
+    def test_positional_loop(self):
+        with self.subTest('0 items w/o default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-loop]'
+                ),
+                '<outer></outer>'
+            )
+        with self.subTest('3 items w/o default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-loop arg 1\\arg 2\\arg 3]'
+                ),
+                '<outer>'
+                '<inner>arg 1</inner>'
+                '<inner>arg 2</inner>'
+                '<inner>arg 3</inner>'
+                '</outer>'
+            )
+        with self.subTest('0 items w/ default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-loop-default]'
+                ),
+                '<outer>no arguments</outer>'
+            )
+        with self.subTest('3 items w/ default'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[positional-loop-default arg 1\\arg 2\\arg 3]'
+                ),
+                '<outer>'
+                '<inner>arg 1</inner>'
+                '<inner>arg 2</inner>'
+                '<inner>arg 3</inner>'
+                '</outer>'
+            )
+
 
 class TagFetchTestCase(TestCase):
     class UnimplementedFetchTestRenderer(BaseRenderer):
@@ -217,3 +340,44 @@ class HookTestCase(TestCase):
             ),
             '<post>pre</post>'
         )
+
+
+class OverflowTestCase(TestCase):
+    class TestRenderer(BaseRenderer):
+        tags = {
+            'const': 'constant value',
+            'positional-sub': '<sub>[\\\\1]</sub>\n[const]',
+            'wrapper': '<wrapper>[positional-sub [\\\\1]]</wrapper>',
+        }
+
+        def get_tag(self, name):
+            return self.tags[name]
+
+    def test_tag_stack_overflow(self):
+        renderer = self.TestRenderer(max_depth=2)
+        with self.subTest('valid'):
+            self.assertEqual(
+                renderer.render_markup(
+                    '[positional-sub argument value]'
+                ),
+                '<sub>argument value</sub>\nconstant value'
+            )
+        with self.subTest('overflow'):
+            with self.assertRaises(TagStackOverflow) as cm:
+                renderer.render_markup(
+                    '[wrapper argument value]'
+                )
+            self.assertEqual(
+                str(cm.exception),
+                (
+                    'ROOT:1,2 -> '
+                    'wrapper:1,11 -> '
+                    'positional-sub:2,2 -> '
+                    'const'
+                )
+            )
+            # Ensure all tags were popped from stack.
+            self.assertEqual(
+                len(renderer.tag_stack._entries),
+                0
+            )
