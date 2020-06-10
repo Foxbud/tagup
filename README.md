@@ -10,7 +10,7 @@ This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.
 
 ## Changelog
 
-**v0.3.0**
+**v0.3.0.dev**
 
 - Added "max_depth" option to "BaseRenderer."
 

@@ -13,4 +13,4 @@ from .language import BaseRenderer
 try:
     __version__ = get_distribution(__name__).version
 except DistributionNotFound:
-    __version__ = ""
+    pass
