@@ -8,79 +8,79 @@ from lark import Tree
 
 
 class DiscardNode(Exception):
-	pass
+    pass
 
 
 class BaseTraverser:
-	preprocess_hook_template = 'preprocess_{name}_node'
-	postprocess_hook_template = 'postprocess_{name}_node'
+    preprocess_hook_template = 'preprocess_{name}_node'
+    postprocess_hook_template = 'postprocess_{name}_node'
 
-	def __init__(self, hook_manager):
-		self.hook_manager = hook_manager
+    def __init__(self, hook_manager):
+        self.hook_manager = hook_manager
 
-	def traverse(self, node):
-		raise NotImplementedError
+    def traverse(self, node):
+        raise NotImplementedError
 
-	def traverse_children(self, node):
-		new_children = []
-		for child in node.children:
-			if isinstance(child, Tree):
-				try:
-					new_children.append(self.traverse(child))
-				except DiscardNode:
-					pass
-			else:
-				new_children.append(child)
+    def traverse_children(self, node):
+        new_children = []
+        for child in node.children:
+            if isinstance(child, Tree):
+                try:
+                    new_children.append(self.traverse(child))
+                except DiscardNode:
+                    pass
+            else:
+                new_children.append(child)
 
-		return new_children
+        return new_children
 
-	def process(self, node):
-		node_name = node.data
-		try:
-			processor = getattr(self, node_name)
-		except AttributeError:
-			pass
-		else:
-			node = self.preprocess_hook(node, node_name)
-			node = processor(node)
-			node = self.postprocess_hook(node, node_name)
+    def process(self, node):
+        node_name = node.data
+        try:
+            processor = getattr(self, node_name)
+        except AttributeError:
+            pass
+        else:
+            node = self.preprocess_hook(node, node_name)
+            node = processor(node)
+            node = self.postprocess_hook(node, node_name)
 
-		return node
+        return node
 
-	def preprocess_hook(self, node, node_name):
-		hook_name = self.preprocess_hook_template.format(name=node_name)
-		try:
-			hook = getattr(self.hook_manager, hook_name)
-		except AttributeError:
-			pass
-		else:
-			node = hook(node)
+    def preprocess_hook(self, node, node_name):
+        hook_name = self.preprocess_hook_template.format(name=node_name)
+        try:
+            hook = getattr(self.hook_manager, hook_name)
+        except AttributeError:
+            pass
+        else:
+            node = hook(node)
 
-		return node
+        return node
 
-	def postprocess_hook(self, node, node_name):
-		hook_name = self.postprocess_hook_template.format(name=node_name)
-		try:
-			hook = getattr(self.hook_manager, hook_name)
-		except AttributeError:
-			pass
-		else:
-			node = hook(node)
+    def postprocess_hook(self, node, node_name):
+        hook_name = self.postprocess_hook_template.format(name=node_name)
+        try:
+            hook = getattr(self.hook_manager, hook_name)
+        except AttributeError:
+            pass
+        else:
+            node = hook(node)
 
-		return node
+        return node
 
 
 class PostOrderTraverser(BaseTraverser):
-	def traverse(self, node):
-		node.children = self.traverse_children(node)
-		node = self.process(node)
+    def traverse(self, node):
+        node.children = self.traverse_children(node)
+        node = self.process(node)
 
-		return node
+        return node
 
 
 class PreOrderTraverser(BaseTraverser):
-	def traverse(self, node):
-		node = self.process(node)
-		node.children = self.traverse_children(node)
+    def traverse(self, node):
+        node = self.process(node)
+        node.children = self.traverse_children(node)
 
-		return node
+        return node
