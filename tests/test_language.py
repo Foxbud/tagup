@@ -381,3 +381,29 @@ class OverflowTestCase(TestCase):
                 len(renderer.tag_stack._entries),
                 0
             )
+
+
+class GlobalTestCase(TestCase):
+    class TestRenderer(BaseRenderer):
+        tags = {
+            'global': (
+                '<inner>'
+                '[\\if global-arg\\[\\\\global-arg]]'
+                '[\\if local-arg\\[\\\\local-arg]]'
+                '</inner>'
+            ),
+            'wrapper': '<wrapper>[global]</wrapper>[\\\\local-arg]',
+        }
+
+        def get_tag(self, name):
+            return self.tags[name]
+
+    def test_global_named_arguments(self):
+        renderer = self.TestRenderer()
+        renderer.set_globals({'global-arg': 'global value'})
+        self.assertEqual(
+            renderer.render_markup(
+                '[wrapper local-arg\\\\local value]'
+            ),
+            '<wrapper><inner>global value</inner></wrapper>local value'
+        )

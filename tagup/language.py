@@ -14,6 +14,7 @@ from .stack import TagStack
 class BaseRenderer:
     def __init__(self, max_depth=8):
         self.tag_stack = TagStack(max_depth)
+        self.global_named_args = dict()
 
     def render_markup(self, markup, named_args=dict(), pos_args=list()):
         ast = self.parse_markup(markup)
@@ -35,12 +36,17 @@ class BaseRenderer:
 
         return result
 
+    def set_globals(self, global_named_args):
+        self.global_named_args = global_named_args
+
     def parse_markup(self, markup):
         return self.get_parser().parse(markup)
 
     def evaluate_ast(self, ast, named_args, pos_args):
+        combined_named_args = {**self.global_named_args, **named_args}
+
         intermediate = ControlFlowEvaluator(
-            named_args=named_args,
+            named_args=combined_named_args,
             pos_args=pos_args,
             hook_manager=self,
         ).traverse(ast)
@@ -50,7 +56,7 @@ class BaseRenderer:
                 self.prefetch_tags(tag_names)
 
         result = CommonEvaluator(
-            named_args=named_args,
+            named_args=combined_named_args,
             pos_args=pos_args,
             hook_manager=self,
             renderer=self,
