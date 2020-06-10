@@ -22,34 +22,43 @@ class StackEntry:
             return f'{self.line},{self.column} -> {self.tag_name}'
 
 
-class TagStack:
-    ROOT_ENTRY = StackEntry('ROOT')
+class TagStackTrace:
+    def __init__(self, entries):
+        self._entries = deepcopy(entries)
 
+    def __getitem(self, key):
+        return self._entries[key]
+
+    def __str__(self):
+        return (
+            f'ROOT{":" if self._entries else ""}'
+            + ':'.join(str(e) for e in self._entries)
+        )
+
+
+class TagStack:
     def __init__(self, max_depth):
-        self._capacity = max_depth + 1
-        self._tags = [self.ROOT_ENTRY]
+        self._capacity = max_depth
+        self._entries = []
 
     def push(self, tag_name, line, column):
-        self._tags.append(StackEntry(tag_name, line, column))
-        if len(self._tags) > self._capacity:
+        self._entries.append(StackEntry(tag_name, line, column))
+        if len(self._entries) > self._capacity:
             err = TagStackOverflow(
-                str(self),
-                self._get_stack_trace()
+                str(trace := self.stack_trace()),
+                stack_trace=trace
             )
-            self._tags.pop()
+            self._entries.pop()
             raise err
 
     def pop(self):
-        if self._tags[-1] is self.ROOT_ENTRY:
+        if not self._entries:
             raise TagStackUnderflow(
                 'pop from empty stack',
-                self._get_stack_trace()
+                stack_trace=self.stack_trace()
             )
         else:
-            self._tags.pop()
+            self._entries.pop()
 
-    def _get_stack_trace(self):
-        return deepcopy(self._tags)
-
-    def __str__(self):
-        return ':'.join(str(e) for e in self._tags)
+    def stack_trace(self):
+        return TagStackTrace(self._entries)
