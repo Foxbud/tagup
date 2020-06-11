@@ -53,8 +53,10 @@ class BaseRenderer:
         try:
             tag_markup = self.get_tag(name)
         except KeyError:
+            trace = self.tag_stack.stack_trace(name, line, column)
             raise TagNotFound(
-                f'could not find tag with name \'{name}\''
+                str(trace),
+                tag_stack_trace=trace
             )
 
         self.tag_stack.push(name, line, column)

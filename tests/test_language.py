@@ -290,10 +290,13 @@ class TagFetchTestCase(TestCase):
     def test_tag_not_found(self):
         renderer = self.ImplementedFetchTestRenderer()
         with self.assertRaises(TagNotFound) as cm:
-            renderer.render_markup('[const]')
+            renderer.render_markup(
+                '[const]'
+            )
         self.assertEqual(
             str(cm.exception),
-            'could not find tag with name \'const\''
+            'ROOT:1,2 -> '
+            'const'
         )
 
 

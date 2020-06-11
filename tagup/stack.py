@@ -26,7 +26,7 @@ class TagStackTrace:
     def __init__(self, entries):
         self._entries = deepcopy(entries)
 
-    def __getitem(self, key):
+    def __getitem__(self, key):
         return self._entries[key]
 
     def __str__(self):
@@ -46,7 +46,7 @@ class TagStack:
         if len(self._entries) > self._capacity:
             err = TagStackOverflow(
                 str(trace := self.stack_trace()),
-                stack_trace=trace
+                tag_stack_trace=trace
             )
             self._entries.pop()
             raise err
@@ -55,10 +55,15 @@ class TagStack:
         if not self._entries:
             raise TagStackUnderflow(
                 'pop from empty stack',
-                stack_trace=self.stack_trace()
+                tag_stack_trace=self.stack_trace()
             )
         else:
             self._entries.pop()
 
-    def stack_trace(self):
-        return TagStackTrace(self._entries)
+    def stack_trace(self, with_tag=None, line=None, column=None):
+        if with_tag is not None:
+            entries = self._entries + [StackEntry(with_tag, line, column)]
+        else:
+            entries = self._entries
+
+        return TagStackTrace(entries)

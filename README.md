@@ -13,6 +13,8 @@ This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.
 **v0.2.3.dev**
 
 - Added "TagDictMixin" for "BaseRenderer."
+- Renamed "stack_trace" to "tag_stack_trace" for all custom errors.
+- Fixed bug in getitem method of "TagStackTrace."
 
 **v0.2.2**
 

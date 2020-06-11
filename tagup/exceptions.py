@@ -4,18 +4,34 @@ See file LICENSE for full license details.
 """
 
 
-class TagupError(Exception):
-    pass
+# Base.
 
+class TagupError(Exception):
+    def __init__(self, message, tag_stack_trace):
+        super().__init__(message)
+        self.tag_stack_trace = tag_stack_trace
+
+
+# Standalone.
 
 class TagNotFound(TagupError):
     pass
 
 
+# Syntax.
+
+class TagupSyntaxError(TagupError):
+    pass
+
+
+class NoSuchBuiltin(TagupSyntaxError):
+    pass
+
+
+# Stack.
+
 class TagStackError(TagupError):
-    def __init__(self, message, stack_trace):
-        super().__init__(message)
-        self.stack_trace = stack_trace
+    pass
 
 
 class TagStackUnderflow(TagStackError):
