@@ -10,6 +10,10 @@ This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.
 
 ## Changelog
 
+**v0.2.3.dev**
+
+- Added "TagDictMixin" for "BaseRenderer."
+
 **v0.2.2**
 
 - Added support for global named arguments.

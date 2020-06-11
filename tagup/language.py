@@ -5,10 +5,29 @@ See file LICENSE for full license details.
 
 
 from os import path
+
 from lark import Lark, Tree
 
 from .evaluation import CommonEvaluator, ControlFlowEvaluator
 from .stack import TagStack
+
+
+class TagDictMixin:
+    def __init__(self, tags, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tag_cache = tags.copy()
+
+    def get_tag(self, name):
+        return self[name]
+
+    def __getitem__(self, key):
+        return self.tag_cache[key]
+
+    def __setitem__(self, key, value):
+        self.tag_cache[key] = value
+
+    def __delitem__(self, key):
+        del self.tag_cache[key]
 
 
 class BaseRenderer:

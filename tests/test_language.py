@@ -7,7 +7,7 @@ See file LICENSE for full license details.
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from tagup import BaseRenderer
+from tagup import BaseRenderer, TagDictMixin
 from tagup.exceptions import TagStackOverflow
 
 
@@ -407,3 +407,62 @@ class GlobalTestCase(TestCase):
             ),
             '<wrapper><inner>global value</inner></wrapper>local value'
         )
+
+
+class TagDictMixinTestCase(TestCase):
+    class TestRenderer(TagDictMixin, BaseRenderer):
+        pass
+
+    def setUp(self):
+        self.renderer = self.TestRenderer(
+            {
+                'wrapper': '<wrapper>[\\\\1]</wrapper>',
+            },
+            max_depth=1
+        )
+
+    def test_get_tag(self):
+        with self.subTest('valid'):
+            self.assertEqual(
+                self.renderer.render_markup(
+                    '[wrapper argument value]'
+                ),
+                '<wrapper>argument value</wrapper>'
+            )
+        with self.subTest('bad tag'):
+            with self.assertRaises(KeyError):
+                self.renderer.render_markup(
+                    '[bad-tag]'
+                )
+
+    def test_dict_operations(self):
+        with self.subTest('get'):
+            self.assertEqual(
+                self.renderer['wrapper'],
+                '<wrapper>[\\\\1]</wrapper>'
+            )
+            with self.assertRaises(KeyError):
+                self.renderer['bad-tag']
+        with self.subTest('set'):
+            self.renderer['new-tag'] = 'constant value'
+            self.assertEqual(
+                self.renderer['new-tag'],
+                'constant value'
+            )
+            self.assertEqual(
+                self.renderer['wrapper'],
+                '<wrapper>[\\\\1]</wrapper>'
+            )
+        with self.subTest('delete'):
+            del self.renderer['new-tag']
+            with self.assertRaises(KeyError):
+                self.renderer['new-tag']
+            with self.assertRaises(KeyError):
+                del self.renderer['new-tag']
+
+    def test_max_depth(self):
+        self.renderer['outer'] = '<outer>[wrapper argument value]</outer>'
+        with self.assertRaises(TagStackOverflow):
+            self.renderer.render_markup(
+                '[outer]'
+            )
