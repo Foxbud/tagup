@@ -8,6 +8,10 @@ class TagupError(Exception):
     pass
 
 
+class TagNotFound(TagupError):
+    pass
+
+
 class TagStackError(TagupError):
     def __init__(self, message, stack_trace):
         super().__init__(message)

@@ -8,7 +8,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from tagup import BaseRenderer, TagDictMixin
-from tagup.exceptions import TagStackOverflow
+from tagup.exceptions import TagNotFound, TagStackOverflow
 
 
 class RenderingTestCase(TestCase):
@@ -267,12 +267,34 @@ class TagFetchTestCase(TestCase):
     class UnimplementedFetchTestRenderer(BaseRenderer):
         pass
 
-    def setUp(self):
-        self.renderer = self.UnimplementedFetchTestRenderer()
+    class ImplementedFetchTestRenderer(BaseRenderer):
+        tags = {
+            'a': 'constant value',
+        }
 
-    def test_unimplemented_error(self):
-        with self.assertRaises(NotImplementedError):
-            self.renderer.render_markup('[const]')
+        def get_tag(self, name):
+            return self.tags[name]
+
+    def test_not_implemented_error(self):
+        renderer = self.UnimplementedFetchTestRenderer()
+        with self.assertRaises(NotImplementedError) as cm:
+            renderer.render_markup('[const]')
+        self.assertEqual(
+            str(cm.exception),
+            (
+                'UnimplementedFetchTestRenderer must define '
+                'UnimplementedFetchTestRenderer.get_tag()'
+            )
+        )
+
+    def test_tag_not_found(self):
+        renderer = self.ImplementedFetchTestRenderer()
+        with self.assertRaises(TagNotFound) as cm:
+            renderer.render_markup('[const]')
+        self.assertEqual(
+            str(cm.exception),
+            'could not find tag with name \'const\''
+        )
 
 
 class TagPrefetchTestCase(TestCase):
@@ -281,6 +303,7 @@ class TagPrefetchTestCase(TestCase):
             'a': 'constant value',
             'b': 'constant value',
             'c': 'constant value',
+            'd': 'constant value',
         }
 
         def get_tag(self, name):
@@ -430,7 +453,7 @@ class TagDictMixinTestCase(TestCase):
                 '<wrapper>argument value</wrapper>'
             )
         with self.subTest('bad tag'):
-            with self.assertRaises(KeyError):
+            with self.assertRaises(TagNotFound):
                 self.renderer.render_markup(
                     '[bad-tag]'
                 )

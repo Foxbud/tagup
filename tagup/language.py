@@ -9,6 +9,7 @@ from os import path
 from lark import Lark, Tree
 
 from .evaluation import CommonEvaluator, ControlFlowEvaluator
+from .exceptions import TagNotFound
 from .stack import TagStack
 
 
@@ -42,13 +43,22 @@ class BaseRenderer:
         return result
 
     def get_tag(self, name):
-        raise NotImplementedError
+        raise NotImplementedError(
+            '{cls} must define {cls}.get_tag()'.format(
+                cls=self.__class__.__name__
+            )
+        )
 
     def render_tag(self, name, named_args, pos_args, line, column):
-        self.tag_stack.push(name, line, column)
-
         try:
             tag_markup = self.get_tag(name)
+        except KeyError:
+            raise TagNotFound(
+                f'could not find tag with name \'{name}\''
+            )
+
+        self.tag_stack.push(name, line, column)
+        try:
             result = self.render_markup(tag_markup, named_args, pos_args)
         finally:
             self.tag_stack.pop()
