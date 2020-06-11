@@ -14,17 +14,17 @@ class TagupError(Exception):
 
 # Standalone.
 
-class TagNotFound(TagupError):
-    pass
-
-
-# Syntax.
-
 class TagupSyntaxError(TagupError):
     pass
 
 
-class NoSuchBuiltin(TagupSyntaxError):
+# Rendering
+
+class TagupRenderingError(TagupError):
+    pass
+
+
+class TagNotFound(TagupRenderingError):
     pass
 
 

@@ -7,9 +7,10 @@ See file LICENSE for full license details.
 from os import path
 
 from lark import Lark, Tree
+from lark.exceptions import UnexpectedToken
 
 from .evaluation import CommonEvaluator, ControlFlowEvaluator
-from .exceptions import TagNotFound
+from .exceptions import TagNotFound, TagupSyntaxError
 from .stack import TagStack
 
 
@@ -37,7 +38,19 @@ class BaseRenderer:
         self.global_named_args = dict()
 
     def render_markup(self, markup, named_args=dict(), pos_args=list()):
-        ast = self.parse_markup(markup)
+        try:
+            ast = self.parse_markup(markup)
+        except UnexpectedToken as err:
+            trace = self.tag_stack.stack_trace(
+                err.token,
+                err.line,
+                err.column
+            )
+            raise TagupSyntaxError(
+                str(trace),
+                tag_stack_trace=trace
+            )
+
         result = self.evaluate_ast(ast, named_args, pos_args)
 
         return result

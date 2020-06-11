@@ -8,7 +8,11 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from tagup import BaseRenderer, TagDictMixin
-from tagup.exceptions import TagNotFound, TagStackOverflow
+from tagup.exceptions import (
+    TagNotFound,
+    TagStackOverflow,
+    TagupSyntaxError,
+)
 
 
 class RenderingTestCase(TestCase):
@@ -492,3 +496,41 @@ class TagDictMixinTestCase(TestCase):
             self.renderer.render_markup(
                 '[outer]'
             )
+
+
+class BadSyntaxTestCase(TestCase):
+    class TestRenderer(BaseRenderer):
+        tags = {
+            'bad-builtin': '[\\bad]',
+            'missing-args': '[\\if]',
+        }
+
+        def get_tag(self, name):
+            return self.tags[name]
+
+    def setUp(self):
+        self.renderer = self.TestRenderer()
+
+    def test_bad_buildin(self):
+        with self.assertRaises(TagupSyntaxError) as cm:
+            self.renderer.render_markup(
+                '[bad-builtin]'
+            )
+        self.assertEqual(
+            str(cm.exception),
+            'ROOT:1,2 -> '
+            'bad-builtin:1,4 -> '
+            'ad'
+        )
+
+    def test_missing_arguments(self):
+        with self.assertRaises(TagupSyntaxError) as cm:
+            self.renderer.render_markup(
+                '[missing-args]'
+            )
+        self.assertEqual(
+            str(cm.exception),
+            'ROOT:1,2 -> '
+            'missing-args:1,5 -> '
+            ']'
+        )
