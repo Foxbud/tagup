@@ -6,16 +6,19 @@ See file LICENSE for full license details.
 
 from os import path
 
-from lark import Lark, Tree
+from lark import Lark
 from lark.exceptions import UnexpectedToken
 
 from .evaluation import CommonEvaluator, ControlFlowEvaluator
-from .exceptions import TagNotFound, TagupSyntaxError
+from .exceptions import (
+    TagNotFound,
+    TagupSyntaxError,
+)
 from .stack import TagStack
 
 
 class TagDictMixin:
-    def __init__(self, tags, *args, **kwargs):
+    def __init__(self, tags=dict(), *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tag_cache = tags.copy()
 
@@ -38,19 +41,7 @@ class BaseRenderer:
         self.global_named_args = dict()
 
     def render_markup(self, markup, named_args=dict(), pos_args=list()):
-        try:
-            ast = self.parse_markup(markup)
-        except UnexpectedToken as err:
-            trace = self.tag_stack.stack_trace(
-                err.token,
-                err.line,
-                err.column
-            )
-            raise TagupSyntaxError(
-                str(trace),
-                tag_stack_trace=trace
-            )
-
+        ast = self.parse_markup(markup)
         result = self.evaluate_ast(ast, named_args, pos_args)
 
         return result
@@ -84,27 +75,42 @@ class BaseRenderer:
         self.global_named_args = global_named_args
 
     def parse_markup(self, markup):
-        return self.get_parser().parse(markup)
+        try:
+            result = self.get_parser().parse(markup)
+        except UnexpectedToken as err:
+            trace = self.tag_stack.stack_trace(
+                token if (token := str(err.token)) else 'END',
+                err.line,
+                err.column
+            )
+            raise TagupSyntaxError(
+                str(trace),
+                tag_stack_trace=trace
+            )
+
+        return result
 
     def evaluate_ast(self, ast, named_args, pos_args):
         combined_named_args = {**self.global_named_args, **named_args}
 
-        intermediate = ControlFlowEvaluator(
+        cf_eval = ControlFlowEvaluator(
             named_args=combined_named_args,
             pos_args=pos_args,
             hook_manager=self,
-        ).traverse(ast)
+        )
+        intermediate = cf_eval.traverse(ast)
 
         if hasattr(self, 'prefetch_tags'):
             if tag_names := self.discover_tags(intermediate):
                 self.prefetch_tags(tag_names)
 
-        result = CommonEvaluator(
+        c_eval = CommonEvaluator(
             named_args=combined_named_args,
             pos_args=pos_args,
             hook_manager=self,
             renderer=self,
-        ).traverse(intermediate)
+        )
+        result = c_eval.traverse(intermediate)
 
         return result
 

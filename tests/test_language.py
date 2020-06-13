@@ -9,6 +9,8 @@ from unittest.mock import MagicMock
 
 from tagup import BaseRenderer, TagDictMixin
 from tagup.exceptions import (
+    NamedArgumentNotFound,
+    PositionalArgumentNotFound,
     TagNotFound,
     TagStackOverflow,
     TagupSyntaxError,
@@ -503,6 +505,7 @@ class BadSyntaxTestCase(TestCase):
         tags = {
             'bad-builtin': '[\\bad]',
             'missing-args': '[\\if]',
+            'unclosed-builtin': '[\\o',
         }
 
         def get_tag(self, name):
@@ -533,4 +536,54 @@ class BadSyntaxTestCase(TestCase):
             'ROOT:1,2 -> '
             'missing-args:1,5 -> '
             ']'
+        )
+
+    def test_unclosed_builtin(self):
+        with self.assertRaises(TagupSyntaxError) as cm:
+            self.renderer.render_markup(
+                '[unclosed-builtin]'
+            )
+        self.assertEqual(
+            str(cm.exception),
+            'ROOT:1,2 -> '
+            'unclosed-builtin:1,3 -> '
+            'END'
+        )
+
+
+class ArgsNotFoundTestCase(TestCase):
+    class TestRenderer(BaseRenderer):
+        tags = {
+            'named-arg-not-found': '[\\\\bad-arg]',
+            'pos-arg-not-found': '[\\\\1]',
+        }
+
+        def get_tag(self, name):
+            return self.tags[name]
+
+    def setUp(self):
+        self.renderer = self.TestRenderer()
+
+    def test_named_argument_not_found(self):
+        with self.assertRaises(NamedArgumentNotFound) as cm:
+            self.renderer.render_markup(
+                '[named-arg-not-found]'
+            )
+        self.assertEqual(
+            str(cm.exception),
+            'ROOT:1,2 -> '
+            'named-arg-not-found:1,4 -> '
+            'bad-arg'
+        )
+
+    def test_positional_argument_not_found(self):
+        with self.assertRaises(PositionalArgumentNotFound) as cm:
+            self.renderer.render_markup(
+                '[pos-arg-not-found]'
+            )
+        self.assertEqual(
+            str(cm.exception),
+            'ROOT:1,2 -> '
+            'pos-arg-not-found:1,4 -> '
+            '1'
         )

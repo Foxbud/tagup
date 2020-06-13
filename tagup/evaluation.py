@@ -8,6 +8,10 @@ from copy import deepcopy
 
 from lark import Token, Tree
 
+from .exceptions import (
+    NamedArgumentNotFound,
+    PositionalArgumentNotFound,
+)
 from .traversal import (
     DiscardNode,
     PostOrderTraverser,
@@ -40,14 +44,36 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
 
     def named_substitution(self, node):
         name = node.children[0].strip()
-        value = self.named_args[name]
+        try:
+            value = self.named_args[name]
+        except KeyError:
+            trace = self.renderer.tag_stack.stack_trace(
+                name,
+                (token := node.children[0]).line,
+                token.column
+            )
+            raise NamedArgumentNotFound(
+                str(trace),
+                tag_stack_trace=trace
+            )
 
         return value
 
     def positional_substitution(self, node):
         position = node.children[0].strip()
         arg_num = int(position) - 1
-        value = self.pos_args[arg_num]
+        try:
+            value = self.pos_args[arg_num]
+        except IndexError:
+            trace = self.renderer.tag_stack.stack_trace(
+                position,
+                (token := node.children[0]).line,
+                token.column
+            )
+            raise PositionalArgumentNotFound(
+                str(trace),
+                tag_stack_trace=trace
+            )
 
         return value
 

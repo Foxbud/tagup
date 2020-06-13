@@ -28,6 +28,18 @@ class TagNotFound(TagupRenderingError):
     pass
 
 
+class ArgumentNotFound(TagupRenderingError):
+    pass
+
+
+class NamedArgumentNotFound(ArgumentNotFound):
+    pass
+
+
+class PositionalArgumentNotFound(ArgumentNotFound):
+    pass
+
+
 # Stack.
 
 class TagStackError(TagupError):
