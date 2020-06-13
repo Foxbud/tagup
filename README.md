@@ -8,6 +8,38 @@
 
 This module currently implements [version 1.0.0](https://fairburn.dev/tagup/1.0.0/) of the Tagup Language.
 
+## Quick Start
+
+```python
+from tagup import BaseRenderer, TagDictMixin
+
+
+class TagupRenderer(TagDictMixin, BaseRenderer):
+    pass
+
+
+renderer = TagupRenderer(
+    # Optional initial markup tags.
+    tags={
+        'bold': r'<span style="font-weight: bold">[\\1]</span>',
+    }
+)
+
+# Manipulate tags using dictionary syntax.
+renderer['link'] = (
+    r'<a href="[\\1]" [\if target\target="_[\\target]"]>'
+    r'[bold [\if 2\[\\2]\[\\1]]]'
+    r'</a>'
+)
+
+html = renderer.render_markup(
+    r'Click [link target\\blank\[\\url]\here] to visit [link\[\\url]]',
+    # Provide optional named (and positional) arguments.
+    named_args={'url': 'http://example.com'}
+)
+print(html)
+```
+
 ## Changelog
 
 **v0.2.3.dev**
