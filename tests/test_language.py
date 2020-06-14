@@ -9,8 +9,8 @@ from unittest.mock import MagicMock
 
 from tagup import BaseRenderer, TagDictMixin
 from tagup.exceptions import (
-    NamedArgumentNotFound,
-    PositionalArgumentNotFound,
+    NamedArgumentMissing,
+    PositionalArgumentMissing,
     TagNotFound,
     TagStackOverflow,
     TagupSyntaxError,
@@ -551,11 +551,11 @@ class BadSyntaxTestCase(TestCase):
         )
 
 
-class ArgsNotFoundTestCase(TestCase):
+class ArgumentsMissingTestCase(TestCase):
     class TestRenderer(BaseRenderer):
         tags = {
-            'named-arg-not-found': '[\\\\bad-arg]',
-            'pos-arg-not-found': '[\\\\1]',
+            'named-arg-missing': '[\\\\bad-arg]',
+            'pos-arg-missing': '[\\\\1]',
         }
 
         def get_tag(self, name):
@@ -564,26 +564,26 @@ class ArgsNotFoundTestCase(TestCase):
     def setUp(self):
         self.renderer = self.TestRenderer()
 
-    def test_named_argument_not_found(self):
-        with self.assertRaises(NamedArgumentNotFound) as cm:
+    def test_named_argument_missing(self):
+        with self.assertRaises(NamedArgumentMissing) as cm:
             self.renderer.render_markup(
-                '[named-arg-not-found]'
+                '[named-arg-missing]'
             )
         self.assertEqual(
             str(cm.exception),
             'ROOT:1,2 -> '
-            'named-arg-not-found:1,4 -> '
+            'named-arg-missing -> '
             'bad-arg'
         )
 
-    def test_positional_argument_not_found(self):
-        with self.assertRaises(PositionalArgumentNotFound) as cm:
+    def test_positional_argument_missing(self):
+        with self.assertRaises(PositionalArgumentMissing) as cm:
             self.renderer.render_markup(
-                '[pos-arg-not-found]'
+                '[pos-arg-missing]'
             )
         self.assertEqual(
             str(cm.exception),
             'ROOT:1,2 -> '
-            'pos-arg-not-found:1,4 -> '
+            'pos-arg-missing -> '
             '1'
         )

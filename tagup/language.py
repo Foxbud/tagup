@@ -20,19 +20,19 @@ from .stack import TagStack
 class TagDictMixin:
     def __init__(self, tags=dict(), *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.tag_cache = tags.copy()
+        self.tags = tags.copy()
 
     def get_tag(self, name):
         return self[name]
 
     def __getitem__(self, key):
-        return self.tag_cache[key]
+        return self.tags[key]
 
     def __setitem__(self, key, value):
-        self.tag_cache[key] = value
+        self.tags[key] = value
 
     def __delitem__(self, key):
-        del self.tag_cache[key]
+        del self.tags[key]
 
 
 class BaseRenderer:
@@ -56,7 +56,9 @@ class BaseRenderer:
     def render_tag(self, name, named_args, pos_args, line, column):
         try:
             tag_markup = self.get_tag(name)
-        except KeyError:
+        except NotImplementedError as err:
+            raise err
+        except Exception:
             trace = self.tag_stack.stack_trace(name, line, column)
             raise TagNotFound(
                 str(trace),

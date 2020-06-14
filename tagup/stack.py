@@ -17,9 +17,9 @@ class StackEntry:
 
     def __str__(self):
         if self.line is None or self.column is None:
-            return f'{self.tag_name}'
+            return f' -> {self.tag_name}'
         else:
-            return f'{self.line},{self.column} -> {self.tag_name}'
+            return f':{self.line},{self.column} -> {self.tag_name}'
 
 
 class TagStackTrace:
@@ -31,8 +31,8 @@ class TagStackTrace:
 
     def __str__(self):
         return (
-            f'ROOT{":" if self._entries else ""}'
-            + ':'.join(str(e) for e in self._entries)
+            'ROOT'
+            + ''.join(str(e) for e in self._entries)
         )
 
 

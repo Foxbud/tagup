@@ -9,8 +9,8 @@ from copy import deepcopy
 from lark import Token, Tree
 
 from .exceptions import (
-    NamedArgumentNotFound,
-    PositionalArgumentNotFound,
+    NamedArgumentMissing,
+    PositionalArgumentMissing,
 )
 from .traversal import (
     DiscardNode,
@@ -47,12 +47,8 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
         try:
             value = self.named_args[name]
         except KeyError:
-            trace = self.renderer.tag_stack.stack_trace(
-                name,
-                (token := node.children[0]).line,
-                token.column
-            )
-            raise NamedArgumentNotFound(
+            trace = self.renderer.tag_stack.stack_trace(name)
+            raise NamedArgumentMissing(
                 str(trace),
                 tag_stack_trace=trace
             )
@@ -65,12 +61,8 @@ class CommonEvaluator(ContextMixin, PostOrderTraverser):
         try:
             value = self.pos_args[arg_num]
         except IndexError:
-            trace = self.renderer.tag_stack.stack_trace(
-                position,
-                (token := node.children[0]).line,
-                token.column
-            )
-            raise PositionalArgumentNotFound(
+            trace = self.renderer.tag_stack.stack_trace(position)
+            raise PositionalArgumentMissing(
                 str(trace),
                 tag_stack_trace=trace
             )

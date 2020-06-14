@@ -28,15 +28,15 @@ class TagNotFound(TagupRenderingError):
     pass
 
 
-class ArgumentNotFound(TagupRenderingError):
+class ArgumentMissing(TagupRenderingError):
     pass
 
 
-class NamedArgumentNotFound(ArgumentNotFound):
+class NamedArgumentMissing(ArgumentMissing):
     pass
 
 
-class PositionalArgumentNotFound(ArgumentNotFound):
+class PositionalArgumentMissing(ArgumentMissing):
     pass
 
 
