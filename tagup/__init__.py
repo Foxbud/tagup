@@ -6,7 +6,12 @@ See file LICENSE for full license details.
 
 from pkg_resources import get_distribution, DistributionNotFound
 
-from .language import BaseRenderer, StaticTagMixin, TagDictMixin
+from .language import (
+    BaseRenderer,
+    StaticTagMixin,
+    TagDictMixin,
+    TrimMixin,
+)
 
 
 # Set version number.

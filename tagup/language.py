@@ -18,24 +18,43 @@ from .exceptions import (
 from .stack import TagStack
 
 
+class TrimMixin:
+    trim_chars = ' \t\n\r'
+
+    def postprocess_block_node(self, node):
+        return node.strip(self.trim_chars)
+
+
 class StaticTagMixin:
     tags = None
 
-    def get_tag(self, name):
-        try:
-            result = self.tags[name]
-        except TypeError:
+    def __init__(self, *args, **kwargs):
+        if TagDictMixin in self.__class__.__bases__:
+            raise ImproperlyConfigured(
+                'StaticTagMixin and TagDictMixin are mutually exclusive'
+            )
+
+        super().__init__(*args, **kwargs)
+        if self.tags is None:
             raise ImproperlyConfigured(
                 '{cls} must define {cls}.tags'.format(
                     cls=self.__class__.__name__
                 )
             )
 
+    def get_tag(self, name):
+        result = self.tags[name]
+
         return result
 
 
 class TagDictMixin:
     def __init__(self, tags=dict(), *args, **kwargs):
+        if StaticTagMixin in self.__class__.__bases__:
+            raise ImproperlyConfigured(
+                'TagDictMixin and StaticTagMixin are mutually exclusive'
+            )
+
         super().__init__(*args, **kwargs)
         self.tags = tags.copy()
 

@@ -7,7 +7,12 @@ See file LICENSE for full license details.
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from tagup import BaseRenderer, StaticTagMixin, TagDictMixin
+from tagup import (
+    BaseRenderer,
+    StaticTagMixin,
+    TagDictMixin,
+    TrimMixin,
+)
 from tagup.exceptions import (
     ImproperlyConfigured,
     NamedArgumentMissing,
@@ -446,6 +451,13 @@ class TagDictMixinTestCase(TestCase):
     class TestRenderer(TagDictMixin, BaseRenderer):
         pass
 
+    class MutuallyExclusiveTestRenderer(
+        TagDictMixin,
+        StaticTagMixin,
+        BaseRenderer,
+    ):
+        pass
+
     def setUp(self):
         self.renderer = self.TestRenderer(
             {
@@ -500,6 +512,14 @@ class TagDictMixinTestCase(TestCase):
                 '[outer]'
             )
 
+    def test_mutually_exclusive(self):
+        with self.assertRaises(ImproperlyConfigured) as cm:
+            _ = self.MutuallyExclusiveTestRenderer()
+        self.assertEqual(
+            str(cm.exception),
+            'TagDictMixin and StaticTagMixin are mutually exclusive'
+        )
+
 
 class StaticTagMixinTestCase(TestCase):
     class InvalidTestRenderer(StaticTagMixin, BaseRenderer):
@@ -510,12 +530,18 @@ class StaticTagMixinTestCase(TestCase):
             'const': 'constant value',
         }
 
+    class MutuallyExclusiveTestRenderer(
+        StaticTagMixin,
+        TagDictMixin,
+        BaseRenderer,
+    ):
+        tags = {
+            'const': 'constant value',
+        }
+
     def test_invalid(self):
-        renderer = self.InvalidTestRenderer()
         with self.assertRaises(ImproperlyConfigured) as cm:
-            renderer.render_markup(
-                '[const]'
-            )
+            _ = self.InvalidTestRenderer()
         self.assertEqual(
             str(cm.exception),
             'InvalidTestRenderer must define '
@@ -529,6 +555,51 @@ class StaticTagMixinTestCase(TestCase):
                 '[const]'
             ),
             'constant value'
+        )
+
+    def test_mutually_exclusive(self):
+        with self.assertRaises(ImproperlyConfigured) as cm:
+            _ = self.MutuallyExclusiveTestRenderer()
+        self.assertEqual(
+            str(cm.exception),
+            'StaticTagMixin and TagDictMixin are mutually exclusive'
+        )
+
+
+class TrimMixinTestCase(TestCase):
+    class DefaultTestRenderer(TrimMixin, BaseRenderer):
+        tags = {
+            'wrapper': '\n <wrapper> [\\\\1]</wrapper>\t',
+        }
+
+        def get_tag(self, name):
+            return self.tags[name]
+
+    class CustomTestRenderer(TrimMixin, BaseRenderer):
+        trim_chars = '_'
+        tags = {
+            'wrapper': '__<wrapper>_[\\\\1]</wrapper>_',
+        }
+
+        def get_tag(self, name):
+            return self.tags[name]
+
+    def test_default(self):
+        renderer = self.DefaultTestRenderer()
+        self.assertEqual(
+            renderer.render_markup(
+                ' [wrapper\n  \\\targument value\n]\n'
+            ),
+            '<wrapper> argument value</wrapper>'
+        )
+
+    def test_custom(self):
+        renderer = self.CustomTestRenderer()
+        self.assertEqual(
+            renderer.render_markup(
+                '_ _[wrapper _argument value ]_'
+            ),
+            ' _<wrapper>_argument value </wrapper>'
         )
 
 
