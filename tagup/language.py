@@ -11,10 +11,27 @@ from lark.exceptions import UnexpectedToken
 
 from .evaluation import CommonEvaluator, ControlFlowEvaluator
 from .exceptions import (
+    ImproperlyConfigured,
     TagNotFound,
     TagupSyntaxError,
 )
 from .stack import TagStack
+
+
+class StaticTagMixin:
+    tags = None
+
+    def get_tag(self, name):
+        try:
+            result = self.tags[name]
+        except TypeError:
+            raise ImproperlyConfigured(
+                '{cls} must define {cls}.tags'.format(
+                    cls=self.__class__.__name__
+                )
+            )
+
+        return result
 
 
 class TagDictMixin:
@@ -23,7 +40,7 @@ class TagDictMixin:
         self.tags = tags.copy()
 
     def get_tag(self, name):
-        return self[name]
+        return self.tags[name]
 
     def __getitem__(self, key):
         return self.tags[key]
@@ -47,7 +64,7 @@ class BaseRenderer:
         return result
 
     def get_tag(self, name):
-        raise NotImplementedError(
+        raise ImproperlyConfigured(
             '{cls} must define {cls}.get_tag()'.format(
                 cls=self.__class__.__name__
             )
@@ -56,7 +73,7 @@ class BaseRenderer:
     def render_tag(self, name, named_args, pos_args, line, column):
         try:
             tag_markup = self.get_tag(name)
-        except NotImplementedError as err:
+        except ImproperlyConfigured as err:
             raise err
         except Exception:
             trace = self.tag_stack.stack_trace(name, line, column)

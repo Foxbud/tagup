@@ -7,8 +7,9 @@ See file LICENSE for full license details.
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from tagup import BaseRenderer, TagDictMixin
+from tagup import BaseRenderer, StaticTagMixin, TagDictMixin
 from tagup.exceptions import (
+    ImproperlyConfigured,
     NamedArgumentMissing,
     PositionalArgumentMissing,
     TagNotFound,
@@ -283,7 +284,7 @@ class TagFetchTestCase(TestCase):
 
     def test_not_implemented_error(self):
         renderer = self.UnimplementedFetchTestRenderer()
-        with self.assertRaises(NotImplementedError) as cm:
+        with self.assertRaises(ImproperlyConfigured) as cm:
             renderer.render_markup('[const]')
         self.assertEqual(
             str(cm.exception),
@@ -498,6 +499,37 @@ class TagDictMixinTestCase(TestCase):
             self.renderer.render_markup(
                 '[outer]'
             )
+
+
+class StaticTagMixinTestCase(TestCase):
+    class InvalidTestRenderer(StaticTagMixin, BaseRenderer):
+        pass
+
+    class ValidTestRenderer(StaticTagMixin, BaseRenderer):
+        tags = {
+            'const': 'constant value',
+        }
+
+    def test_invalid(self):
+        renderer = self.InvalidTestRenderer()
+        with self.assertRaises(ImproperlyConfigured) as cm:
+            renderer.render_markup(
+                '[const]'
+            )
+        self.assertEqual(
+            str(cm.exception),
+            'InvalidTestRenderer must define '
+            'InvalidTestRenderer.tags'
+        )
+
+    def test_valid(self):
+        renderer = self.ValidTestRenderer()
+        self.assertEqual(
+            renderer.render_markup(
+                '[const]'
+            ),
+            'constant value'
+        )
 
 
 class BadSyntaxTestCase(TestCase):

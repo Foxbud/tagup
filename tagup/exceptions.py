@@ -7,12 +7,16 @@ See file LICENSE for full license details.
 # Base.
 
 class TagupError(Exception):
-    def __init__(self, message, tag_stack_trace):
+    def __init__(self, message, tag_stack_trace=None):
         super().__init__(message)
         self.tag_stack_trace = tag_stack_trace
 
 
 # Standalone.
+
+class ImproperlyConfigured(TagupError):
+    pass
+
 
 class TagupSyntaxError(TagupError):
     pass

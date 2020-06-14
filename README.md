@@ -44,8 +44,8 @@ print(html)
 
 **v0.2.3.dev**
 
-- Added "TagDictMixin" for "BaseRenderer."
-- Added new errors "NamedArgumentNotFound," "PositionalArgumentNotFound," "TagNotFound" and "TagupSyntaxError."
+- Added "StaticTagMixin" and "TagDictMixin" for "BaseRenderer."
+- Added new errors "ImproperlyConfigured," "NamedArgumentMissing," "PositionalArgumentMissing," "TagNotFound" and "TagupSyntaxError."
 - Renamed "stack_trace" to "tag_stack_trace" for all custom errors.
 - Fixed bug in getitem method of "TagStackTrace."
 
